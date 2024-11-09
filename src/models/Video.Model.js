@@ -1,0 +1,44 @@
+const mongoose = require('mongoose');
+import mongooseAggregatePaginate  from "mongoose-aggregate-paginate-v2"
+const videoSchema = new mongoose.SchemaType({
+
+    videoFile: {
+        type: String, //Cloudinary URL
+        required: true,
+    },
+    thumbnail: {
+        type: String, //Cloudinary URL
+        required: true,
+    },
+    title: {
+        type: String,
+        required: true,
+    },
+    description: {
+        type: String,
+        required: true,
+    },
+    duration: {
+        type: Number, //Cloudinary URL
+        required: true,
+    },
+    views: {
+        type: Number,
+        default: true,
+    },
+    isPublished: {
+        type: Boolean,
+        default: true,
+    },
+    owner: {
+        type: Schema.Types.ObjectID,
+        ref: "User"
+
+    }
+
+}, { timestamps: true })
+
+
+videoSchema.plugin(mongooseAggregatePaginate)
+
+export default Video = mongoose.model('Video', videoSchema)

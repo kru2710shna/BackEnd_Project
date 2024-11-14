@@ -21,16 +21,16 @@ const registerUser = asyncHandler(async (req, res) => {
     // Check for useer creation
     // return response 
 
-    const { username, email, fullname, pasword } = req.body
+    const { username, email, fullname, password } = req.body
 
     if (
-        [username, email, fullname, pasword].some((fields) =>
+        [username, email, fullname, password].some((fields) =>
             fields?.trim() === "")
     ) {
         throw new ApiError(400, "All Fields are required")
     }
 
-    const exitedUser = User.findOne({
+    const exitedUser = await User.findOne({
         $or: [{ username }, { email }]
     })
 

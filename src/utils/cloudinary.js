@@ -10,6 +10,14 @@ cloudinary.config({
 })
 
 const uploadCloudinary = async (localFilePath) => {
+
+    const uploadDirectory = '/tmp/my-uploads';
+
+    if (!fs.existsSync(uploadDirectory)) {
+        fs.mkdirSync(uploadDirectory, { recursive: true });
+    }
+
+
     try {
 
         if (!localFilePath) {

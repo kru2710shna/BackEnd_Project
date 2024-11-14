@@ -10,7 +10,7 @@ const connectDB = async () => {
     }
 
     try {
-        const connectionInstance = await mongoose.connect(`${process.env.MONGODBURI}/${DB_NAME}`, {
+        const connectionInstance = await mongoose.connect(`${process.env.MONGODBURI}${DB_NAME}`, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });

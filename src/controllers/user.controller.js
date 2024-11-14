@@ -6,18 +6,20 @@ import { ApiResponse } from '../utils/ApiResponse.js'
 import verifyJWT from '../middlewares/auth.middleware.js'
 
 
-const generateAcessAndRefreshTokens = async (userId){
+const generateAcessAndRefreshTokens = async (userId) => {
     try {
 
         const user = await User.findById(userId)
-        const AcessToken = user.generateAcessToken()
+        const acessToken = user.generateAcessToken()
         const refreshToken = user.generateRefreshToken()
+
+        console.log("Generated Access Token:", acessToken);
+        console.log("Generated Refresh Token:", refreshToken);
 
         user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
 
-        return { AcessToken, refreshToken }
-
+        return { acessToken, refreshToken }
 
     } catch (error) {
         throw new ApiError(500, "Something Went Wrong ")
@@ -107,8 +109,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const { email, password, username } = req.body
 
-    if (username || !email) {
+    if (username && !email) {
         throw new ApiError(400, "username or email is required")
+    }
+
+    if (!password) {
+        throw new ApiError(400, "Password is required");
     }
 
     const user = await User.findOne({
@@ -119,6 +125,8 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found")
     }
 
+    // console.log("User Found:", user);
+
     const isPasswordValid = await user.isPasswordCorrect(password)
 
     if (!isPasswordValid) {
@@ -127,13 +135,17 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const { accessToken, refreshToken } = await generateAcessAndRefreshTokens(user._id)
 
+    console.log("Access Token:", accessToken); // Debug log
+    console.log("Refresh Token:", refreshToken); // Debug log
+
     const loggedInUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: false,
+        sameSite: "Strict",
     }
 
     return res
@@ -142,13 +154,20 @@ const loginUser = asyncHandler(async (req, res) => {
         .cookie("refresh_token", refreshToken, options)
         .json(
             new ApiError(200, {
-                user: loggedInUser, accessToken: accessToken, refreshToken, refreshToken
+                user,
+                loggedInUser,
+                accessToken,
+                refreshToken
             },
                 "User Logged In Successfully")
         )
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
+
+    if (!req.user) {
+        throw new ApiError(401, "Unauthorized Request - No User Logged In");
+    }
 
     await User.findByIdAndUpdate(
         req.user._id,
@@ -161,13 +180,13 @@ const logoutUser = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: false,
     }
 
     return res
         .status(200)
-        .clearCookie(accessToken)
-        .clearCookie(refreshToken)
+        .clearCookie("access_token", options)
+        .clearCookie("refresh_token", options)
         .json(new ApiError(200, {}, "User logged out successfully"))
 })
 

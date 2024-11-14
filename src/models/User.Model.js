@@ -57,7 +57,11 @@ userSchema.pre("save", async function (next) {
 })
 
 userSchema.methods.isPasswordCorrect = async function (password) {
-    await bcrypt.compare(password, this.password)
+    if (!password || !this.password) {
+        throw new ApiError(400, "Password is missing");
+    }
+
+    return await bcrypt.compare(password, this.password)
 }
 
 
@@ -71,7 +75,7 @@ userSchema.methods.generateAcessToken = function () {
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "1d"
         }
     )
 }
